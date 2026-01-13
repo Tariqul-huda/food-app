@@ -95,7 +95,7 @@ export const HomePage = () => {
         {!loading && !filtered.length && <p className="text-slate-600">No restaurants match that query.</p>}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((restaurant) => (
-            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+            <RestaurantCard key={restaurant.id || restaurant._id} restaurant={restaurant} />
           ))}
         </div>
       </section>

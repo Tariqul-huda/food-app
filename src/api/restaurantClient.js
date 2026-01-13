@@ -120,13 +120,13 @@ export const restaurantApi = {
 
   // Get restaurant's orders
   getOrders: async () => {
-    const response = await apiClient.get('/restaurants/orders');
-    return response.orders || response;
+    const response = await apiClient.get('/orders');
+    return response;
   },
 
   // Update order status
   updateOrderStatus: async (orderId, status) => {
-    const response = await apiClient.put(`/restaurants/orders/${orderId}/status`, { status });
+    const response = await apiClient.patch(`/orders/${orderId}/status`, { status });
     return response;
   },
 };

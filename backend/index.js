@@ -1,14 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import restaurantRoutes from './routes/restaurants.js';
 import orderRoutes from './routes/orders.js';
 import foodRoutes from './routes/foods.js';
+import publicFoodRoutes from './routes/publicFoods.js';
 import { authenticateToken } from './middleware/auth.js';
 import connectDB from './config/database.js';
+import { initializeSocket } from './socket/socketServer.js';
 
 dotenv.config();
 
@@ -17,6 +20,9 @@ connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Create HTTP server for Socket.io
+const httpServer = createServer(app);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,14 +39,22 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/orders', authenticateToken, orderRoutes);
-app.use('/api/restaurants/menu', authenticateToken, foodRoutes);
+app.use('/api/restaurants/menu', authenticateToken, foodRoutes); // Protected routes for restaurants
+app.use('/api/foods', publicFoodRoutes); // Public routes for users
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.listen(PORT, () => {
+// Initialize Socket.io
+export const io = initializeSocket(httpServer);
+
+// Make io available to routes
+app.set('io', io);
+
+httpServer.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Socket.io server initialized`);
 });
 
