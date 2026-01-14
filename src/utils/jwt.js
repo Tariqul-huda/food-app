@@ -27,7 +27,7 @@ export const encodeJWT = (payload) => {
 export const decodeJWT = (token) => {
   try {
     const parts = token.split('.');
-    if (parts.length !== 2) {
+    if (parts.length < 2 || parts.length > 3) {
       throw new Error('Invalid token format');
     }
     const decodedPayload = JSON.parse(base64UrlDecode(parts[1]));

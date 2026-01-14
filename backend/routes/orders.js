@@ -1,5 +1,6 @@
 import express from 'express';
 import { Order, OrderStatus } from '../models/Order.js';
+import { User } from '../models/User.js';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -89,6 +90,30 @@ router.post('/', authorizeRoles('user'), async (req, res) => {
 
     await order.save();
 
+    // UPDATE USER COINS (In-memory persistence)
+    try {
+      const user = userModel.findById(req.user.id);
+      if (user) {
+        if (!user.coinBalances) user.coinBalances = [];
+
+        const existingIndex = user.coinBalances.findIndex(c => c.restaurantId === restaurantId);
+
+        if (existingIndex >= 0) {
+          // Update existing balance
+          const current = user.coinBalances[existingIndex].coins || 0;
+          user.coinBalances[existingIndex].coins = Math.max(0, current + (coinDelta || 0));
+        } else if ((coinDelta || 0) > 0) {
+          // Add new balance
+          user.coinBalances.push({
+            restaurantId,
+            coins: coinDelta || 0
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update user coins:', err);
+    }
+
     // Emit orderCreated event via Socket.io
     const io = req.app.get('io');
     if (io) {
@@ -98,7 +123,7 @@ router.post('/', authorizeRoles('user'), async (req, res) => {
         restaurantId: order.restaurantId,
         order: order.toObject(),
       };
-      
+
       // Emit to order room
       io.to(`order:${order._id}`).emit('orderCreated', orderData);
       // Emit to all connected clients (will be filtered on client side)
@@ -137,7 +162,7 @@ router.patch('/:id/status', authorizeRoles('restaurant'), async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       const orderObj = order.toObject();
-      
+
       // Emit to order room
       io.to(`order:${order._id}`).emit('orderUpdated', {
         orderId: order._id.toString(),

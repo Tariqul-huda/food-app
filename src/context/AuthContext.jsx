@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
           if (isTokenExpired(token)) {
             throw new Error('Token expired');
           }
-          
+
           const decoded = decodeJWT(token);
           if (decoded) {
             // Try to get full user data from API, fallback to decoded token
@@ -27,14 +27,11 @@ export const AuthProvider = ({ children }) => {
               const userData = await authApi.getCurrentUser();
               setUser(userData);
             } catch (err) {
-              // If API fails, use decoded token data
-              setUser({
-                id: decoded.id,
-                email: decoded.email,
-                name: decoded.name,
-                role: decoded.role,
-                restaurantId: decoded.restaurantId,
-              });
+              console.error('Failed to verify token with server:', err);
+              // If server rejects token (e.g. 403 Forbidden due to secret change), 
+              // we must clear it and force login.
+              // Throwing here will be caught by the outer catch block which clears tokens.
+              throw err;
             }
           } else {
             throw new Error('Invalid token');

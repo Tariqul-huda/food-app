@@ -77,9 +77,9 @@ export const RestaurantDiscountsPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <PageHeader 
-          title="Discounts" 
-          subtitle="Create and manage discount codes for your restaurant" 
+        <PageHeader
+          title="Discounts"
+          subtitle="Create and manage discount codes for your restaurant"
         />
         <button
           onClick={() => setShowForm(!showForm)}
@@ -222,22 +222,20 @@ export const RestaurantDiscountsPage = () => {
             return (
               <div
                 key={discount.id}
-                className={`rounded-xl border p-6 shadow-sm ${
-                  active
+                className={`rounded-xl border p-6 shadow-sm ${active
                     ? 'border-green-200 bg-green-50'
                     : 'border-slate-200 bg-white'
-                }`}
+                  }`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-slate-900">{discount.code}</h3>
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          active
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${active
                             ? 'bg-green-100 text-green-800'
                             : 'bg-slate-100 text-slate-800'
-                        }`}
+                          }`}
                       >
                         {active ? 'Active' : 'Inactive'}
                       </span>
@@ -257,11 +255,11 @@ export const RestaurantDiscountsPage = () => {
                 <div className="grid gap-2 text-sm text-slate-600 md:grid-cols-2">
                   <div>
                     <span className="font-medium">Valid From:</span>{' '}
-                    {format(new Date(discount.validFrom), 'PP')}
+                    {discount.validFrom ? format(new Date(discount.validFrom), 'PP') : 'N/A'}
                   </div>
                   <div>
                     <span className="font-medium">Valid Until:</span>{' '}
-                    {format(new Date(discount.validUntil), 'PP')}
+                    {discount.validUntil ? format(new Date(discount.validUntil), 'PP') : 'N/A'}
                   </div>
                 </div>
               </div>

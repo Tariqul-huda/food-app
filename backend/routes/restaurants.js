@@ -1,27 +1,30 @@
 import express from 'express';
-import { restaurantModel } from '../models/users.js';
+import { Restaurant } from '../models/Restaurant.js';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get all restaurants (public)
-router.get('/', (req, res) => {
-  const restaurants = restaurantModel.getAll();
-  // Remove sensitive data
-  const publicRestaurants = restaurants.map(({ password, ...rest }) => rest);
-  res.json(publicRestaurants);
+router.get('/', async (req, res) => {
+  try {
+    const restaurants = await Restaurant.find().select('-password').sort({ createdAt: -1 });
+    res.json(restaurants);
+  } catch (error) {
+    console.error('Get restaurants error:', error);
+    res.status(500).json({ error: 'Failed to fetch restaurants' });
+  }
 });
 
 // Get current restaurant's profile (protected - restaurant only)
-// Must be before /:id route to avoid route conflicts
-router.get('/profile', authenticateToken, authorizeRoles('restaurant'), (req, res) => {
+router.get('/profile', authenticateToken, authorizeRoles('restaurant'), async (req, res) => {
   try {
-    const restaurant = restaurantModel.findById(req.user.id);
+    const restaurant = await Restaurant.findById(req.user.id).select('-password');
+
     if (!restaurant) {
       return res.status(404).json({ error: 'Restaurant not found' });
     }
-    const { password, ...restaurantWithoutPassword } = restaurant;
-    res.json({ restaurant: restaurantWithoutPassword });
+
+    res.json({ restaurant });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -29,28 +32,31 @@ router.get('/profile', authenticateToken, authorizeRoles('restaurant'), (req, re
 });
 
 // Update current restaurant's profile (protected - restaurant only)
-router.put('/profile', authenticateToken, authorizeRoles('restaurant'), (req, res) => {
+router.put('/profile', authenticateToken, authorizeRoles('restaurant'), async (req, res) => {
   try {
-    const restaurant = restaurantModel.findById(req.user.id);
+    const restaurant = await Restaurant.findById(req.user.id);
+
     if (!restaurant) {
       return res.status(404).json({ error: 'Restaurant not found' });
     }
 
-    // Update allowed fields
-    const allowedFields = ['name', 'phone', 'address', 'cuisine', 'description', 'coinRate', 'coinThreshold'];
-    const updates = {};
-    
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
-      }
-    }
+    const { name, phone, address, cuisine, description, coinRate, coinThreshold } = req.body;
 
-    // Apply updates
-    Object.assign(restaurant, updates);
+    // Update fields if provided
+    if (name) restaurant.name = name;
+    if (phone) restaurant.phone = phone;
+    if (address) restaurant.address = address;
+    if (cuisine) restaurant.cuisine = cuisine;
+    if (description) restaurant.description = description;
+    if (coinRate !== undefined) restaurant.coinRate = Number(coinRate);
+    if (coinThreshold !== undefined) restaurant.coinThreshold = Number(coinThreshold);
 
-    const { password, ...restaurantWithoutPassword } = restaurant;
-    res.json({ restaurant: restaurantWithoutPassword });
+    await restaurant.save();
+
+    const restaurantObj = restaurant.toObject();
+    delete restaurantObj.password;
+
+    res.json({ restaurant: restaurantObj });
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -58,14 +64,22 @@ router.put('/profile', authenticateToken, authorizeRoles('restaurant'), (req, re
 });
 
 // Get restaurant by ID (public)
-router.get('/:id', (req, res) => {
-  const restaurant = restaurantModel.findById(req.params.id);
-  if (!restaurant) {
-    return res.status(404).json({ error: 'Restaurant not found' });
+router.get('/:id', async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id).select('-password');
+
+    if (!restaurant) {
+      return res.status(404).json({ error: 'Restaurant not found' });
+    }
+
+    res.json(restaurant);
+  } catch (error) {
+    console.error('Get restaurant by ID error:', error);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ error: 'Restaurant not found' });
+    }
+    res.status(500).json({ error: 'Internal server error' });
   }
-  const { password, ...publicRestaurant } = restaurant;
-  res.json(publicRestaurant);
 });
 
 export default router;
-

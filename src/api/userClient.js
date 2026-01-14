@@ -78,5 +78,15 @@ export const userApi = {
   getCoins: async () => {
     return apiClient.get('/user/coins');
   },
+
+  // Get user profile
+  getProfile: async () => {
+    return apiClient.get('/users/profile');
+  },
+
+  // Update user profile
+  updateProfile: async (data) => {
+    return apiClient.put('/users/profile', data);
+  },
 };
 

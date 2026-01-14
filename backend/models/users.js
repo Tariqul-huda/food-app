@@ -8,6 +8,7 @@ export const userModel = {
       id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       ...userData,
       role: 'user',
+      coinBalances: [],
       createdAt: new Date().toISOString(),
     };
     users.push(user);

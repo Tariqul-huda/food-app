@@ -18,7 +18,11 @@ export const LoginPage = () => {
 
     try {
       await login(email, password, role);
-      navigate('/');
+      if (role === 'restaurant') {
+        navigate('/restaurant/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {

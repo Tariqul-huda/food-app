@@ -7,8 +7,10 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import restaurantRoutes from './routes/restaurants.js';
 import orderRoutes from './routes/orders.js';
+import dashboardRoutes from './routes/dashboard.js';
 import foodRoutes from './routes/foods.js';
 import publicFoodRoutes from './routes/publicFoods.js';
+import userRoutes from './routes/users.js';
 import { authenticateToken } from './middleware/auth.js';
 import connectDB from './config/database.js';
 import { initializeSocket } from './socket/socketServer.js';
@@ -28,8 +30,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Middleware
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+const allowedOrigins = [
+  process.env.CORS_ORIGIN || 'http://localhost:5173',
+  'http://localhost:5174'
+];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 // Serve uploaded images
@@ -37,9 +42,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/restaurants', restaurantRoutes);
+app.use('/api/users', userRoutes); // User profile routes
+app.use('/api/restaurant', dashboardRoutes); // New dashboard routes
+app.use('/api/restaurants/menu', authenticateToken, foodRoutes); // Specific route FIRST
+app.use('/api/restaurants', restaurantRoutes); // Generic route LAST
 app.use('/api/orders', authenticateToken, orderRoutes);
-app.use('/api/restaurants/menu', authenticateToken, foodRoutes); // Protected routes for restaurants
 app.use('/api/foods', publicFoodRoutes); // Public routes for users
 
 // Health check

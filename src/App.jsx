@@ -14,7 +14,7 @@ import { SearchPage } from './pages/SearchPage';
 import { CartPage } from './pages/CartPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { OrderTrackingPage } from './pages/OrderTrackingPage';
-import { ProfilePage } from './pages/ProfilePage';
+import { UserProfilePage } from './pages/UserProfilePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RestaurantDashboardPage } from './pages/restaurant/RestaurantDashboardPage';
 import { ManageFoodsPage } from './pages/restaurant/ManageFoodsPage';
@@ -25,15 +25,18 @@ import { RestaurantDiscountsPage } from './pages/restaurant/RestaurantDiscountsP
 import { UserDashboardPage } from './pages/user/UserDashboardPage';
 import { UserCoinsPage } from './pages/user/UserCoinsPage';
 
+import { Toaster } from 'react-hot-toast';
+
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
       <AppProvider>
-          <Routes>
+        <Toaster position="top-center" />
+        <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          
+
           {/* Protected routes with Layout */}
           <Route
             path="/"
@@ -110,7 +113,7 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Layout>
-                  <ProfilePage />
+                  <UserProfilePage />
                 </Layout>
               </ProtectedRoute>
             }
@@ -152,12 +155,12 @@ const App = () => (
             element={
               <ProtectedRoute requireRole="user">
                 <Layout>
-                  <ProfilePage />
+                  <UserProfilePage />
                 </Layout>
               </ProtectedRoute>
             }
           />
-          
+
           {/* Restaurant Dashboard Routes */}
           <Route
             path="/restaurant/dashboard"
@@ -219,17 +222,17 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          
+
           {/* Redirect /restaurant to /restaurant/dashboard */}
           <Route
             path="/restaurant"
             element={<Navigate to="/restaurant/dashboard" replace />}
           />
-          
+
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </AppProvider>
+        </Routes>
+      </AppProvider>
     </AuthProvider>
   </BrowserRouter>
 );
