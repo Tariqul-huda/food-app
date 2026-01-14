@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../api/authClient';
+import { decodeJWT, isTokenExpired } from '../utils/jwt';
 
 const AuthContext = createContext(undefined);
 
@@ -14,8 +15,30 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (token) {
         try {
-          const userData = await authApi.getCurrentUser();
-          setUser(userData);
+          // Decode JWT from localStorage (mocked)
+          if (isTokenExpired(token)) {
+            throw new Error('Token expired');
+          }
+          
+          const decoded = decodeJWT(token);
+          if (decoded) {
+            // Try to get full user data from API, fallback to decoded token
+            try {
+              const userData = await authApi.getCurrentUser();
+              setUser(userData);
+            } catch (err) {
+              // If API fails, use decoded token data
+              setUser({
+                id: decoded.id,
+                email: decoded.email,
+                name: decoded.name,
+                role: decoded.role,
+                restaurantId: decoded.restaurantId,
+              });
+            }
+          } else {
+            throw new Error('Invalid token');
+          }
         } catch (err) {
           // Token invalid, clear it
           localStorage.removeItem('accessToken');

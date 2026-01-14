@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { useAppState } from '../context/AppContext';
 import { userApi } from '../api/userClient';
-import { useSocket } from '../context/SocketContext';
 
 const ORDER_STATUSES = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
@@ -16,40 +15,16 @@ const ORDER_STATUSES = {
 
 export const OrdersPage = () => {
   const { user } = useAppState();
-  const { socket } = useSocket();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchOrders();
+    // Poll for order updates every 10 seconds
+    const interval = setInterval(fetchOrders, 10000);
+    return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleOrderCreated = (data) => {
-      // Add new order to the list
-      setOrders((prev) => [data.order, ...prev]);
-    };
-
-    const handleOrderUpdated = (data) => {
-      // Update order in the list
-      setOrders((prev) =>
-        prev.map((order) =>
-          (order._id || order.id) === data.orderId ? data.order : order
-        )
-      );
-    };
-
-    socket.on('orderCreated', handleOrderCreated);
-    socket.on('orderUpdated', handleOrderUpdated);
-
-    return () => {
-      socket.off('orderCreated', handleOrderCreated);
-      socket.off('orderUpdated', handleOrderUpdated);
-    };
-  }, [socket]);
 
   const fetchOrders = async () => {
     try {

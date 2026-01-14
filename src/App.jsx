@@ -3,7 +3,6 @@ import { Layout } from './components/Layout';
 import { DashboardLayout } from './components/DashboardLayout';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
-import { SocketProvider } from './context/SocketContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
@@ -21,12 +20,15 @@ import { RestaurantDashboardPage } from './pages/restaurant/RestaurantDashboardP
 import { ManageFoodsPage } from './pages/restaurant/ManageFoodsPage';
 import { RestaurantOrdersPage } from './pages/restaurant/RestaurantOrdersPage';
 import { RestaurantProfilePage } from './pages/restaurant/RestaurantProfilePage';
+import { RestaurantCoinsPage } from './pages/restaurant/RestaurantCoinsPage';
+import { RestaurantDiscountsPage } from './pages/restaurant/RestaurantDiscountsPage';
+import { UserDashboardPage } from './pages/user/UserDashboardPage';
+import { UserCoinsPage } from './pages/user/UserCoinsPage';
 
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
-      <SocketProvider>
-        <AppProvider>
+      <AppProvider>
           <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -113,6 +115,48 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* User Routes */}
+          <Route
+            path="/user/dashboard"
+            element={
+              <ProtectedRoute requireRole="user">
+                <Layout>
+                  <UserDashboardPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/coins"
+            element={
+              <ProtectedRoute requireRole="user">
+                <Layout>
+                  <UserCoinsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/orders"
+            element={
+              <ProtectedRoute requireRole="user">
+                <Layout>
+                  <OrdersPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/profile"
+            element={
+              <ProtectedRoute requireRole="user">
+                <Layout>
+                  <ProfilePage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           
           {/* Restaurant Dashboard Routes */}
           <Route
@@ -155,6 +199,26 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/restaurant/coins"
+            element={
+              <ProtectedRoute requireRole="restaurant">
+                <DashboardLayout>
+                  <RestaurantCoinsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/restaurant/discounts"
+            element={
+              <ProtectedRoute requireRole="restaurant">
+                <DashboardLayout>
+                  <RestaurantDiscountsPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
           
           {/* Redirect /restaurant to /restaurant/dashboard */}
           <Route
@@ -166,7 +230,6 @@ const App = () => (
           <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </AppProvider>
-      </SocketProvider>
     </AuthProvider>
   </BrowserRouter>
 );

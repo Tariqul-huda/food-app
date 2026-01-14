@@ -3,8 +3,10 @@ import { useAuth } from '../context/AuthContext';
 
 const menuItems = [
   { path: '/restaurant/dashboard', label: 'Dashboard', icon: '📊' },
-  { path: '/restaurant/foods', label: 'Manage Foods', icon: '🍔' },
+  { path: '/restaurant/foods', label: 'Manage Menu', icon: '🍔' },
   { path: '/restaurant/orders', label: 'Orders', icon: '📦' },
+  { path: '/restaurant/discounts', label: 'Discounts', icon: '🎫' },
+  { path: '/restaurant/coins', label: 'Restaurant Coins', icon: '🪙' },
   { path: '/restaurant/profile', label: 'Profile', icon: '👤' },
 ];
 

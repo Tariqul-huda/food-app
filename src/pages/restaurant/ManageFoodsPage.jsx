@@ -184,15 +184,15 @@ export const ManageFoodsPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <PageHeader title="Manage Foods" subtitle="Add, edit, or remove menu items" />
+        <PageHeader title="Manage Menu" subtitle="Add, edit, or remove menu items" />
         <button
           onClick={() => {
             resetForm();
             setShowForm(true);
           }}
-          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
+          className="rounded-lg bg-orange-500 px-6 py-3 text-base font-semibold text-white hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg"
         >
-          + Add Food Item
+          ➕ Add Menu Item
         </button>
       </div>
 
@@ -347,17 +347,21 @@ export const ManageFoodsPage = () => {
           <p className="text-slate-600">Loading foods...</p>
         </div>
       ) : foods.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-          <p className="text-slate-600 mb-4">No food items yet.</p>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-            className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
-          >
-            Add Your First Food Item
-          </button>
+        <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-12 text-center shadow-lg">
+          <div className="max-w-md mx-auto">
+            <div className="text-6xl mb-4">🍔</div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">No menu items yet</h3>
+            <p className="text-slate-600 mb-6">Start building your menu by adding your first food item!</p>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              className="rounded-lg bg-orange-500 px-8 py-3 text-base font-semibold text-white hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg"
+            >
+              ➕ Add Your First Menu Item
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

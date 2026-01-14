@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { PageHeader } from '../../components/PageHeader';
 import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
 import { restaurantApi } from '../../api/restaurantClient';
 
 // Order status options
@@ -24,7 +23,6 @@ const STATUS_TRANSITIONS = {
 
 export const RestaurantOrdersPage = () => {
   const { user } = useAuth();
-  const { socket } = useSocket();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,35 +30,10 @@ export const RestaurantOrdersPage = () => {
 
   useEffect(() => {
     fetchOrders();
+    // Poll for new orders every 10 seconds
+    const interval = setInterval(fetchOrders, 10000);
+    return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleOrderCreated = (data) => {
-      // Add new order to the list if it's for this restaurant
-      if (data.restaurantId === user?.id) {
-        setOrders((prev) => [data.order, ...prev]);
-      }
-    };
-
-    const handleOrderUpdated = (data) => {
-      // Update order in the list
-      setOrders((prev) =>
-        prev.map((order) =>
-          (order._id || order.id) === data.orderId ? data.order : order
-        )
-      );
-    };
-
-    socket.on('orderCreated', handleOrderCreated);
-    socket.on('orderUpdated', handleOrderUpdated);
-
-    return () => {
-      socket.off('orderCreated', handleOrderCreated);
-      socket.off('orderUpdated', handleOrderUpdated);
-    };
-  }, [socket, user?.id]);
 
   const fetchOrders = async () => {
     try {

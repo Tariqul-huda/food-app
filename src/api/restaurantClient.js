@@ -126,7 +126,27 @@ export const restaurantApi = {
 
   // Update order status
   updateOrderStatus: async (orderId, status) => {
-    const response = await apiClient.patch(`/orders/${orderId}/status`, { status });
+    const response = await apiClient.put(`/restaurant/orders/${orderId}/status`, { status });
     return response;
+  },
+
+  // Get restaurant dashboard data
+  getDashboard: async () => {
+    return apiClient.get('/restaurant/dashboard');
+  },
+
+  // Get restaurant coins
+  getCoins: async () => {
+    return apiClient.get('/restaurant/coins');
+  },
+
+  // Get discounts
+  getDiscounts: async () => {
+    return apiClient.get('/restaurant/discounts');
+  },
+
+  // Create discount
+  createDiscount: async (discountData) => {
+    return apiClient.post('/restaurant/discounts', discountData);
   },
 };

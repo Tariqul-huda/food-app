@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { userApi } from '../api/userClient';
-import { useSocket } from '../context/SocketContext';
-import { joinOrderRoom, leaveOrderRoom } from '../socket/socketClient';
 import { PageHeader } from '../components/PageHeader';
 
 const ORDER_STATUSES = {
@@ -23,7 +21,6 @@ const STATUS_STEPS = [
 
 export const OrderTrackingPage = () => {
   const { id } = useParams();
-  const { socket, socketConnected } = useSocket();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,7 +32,17 @@ export const OrderTrackingPage = () => {
         setLoading(true);
         setError(null);
         const orderData = await userApi.getOrder(id);
+        const previousStatus = order?.status;
         setOrder(orderData);
+        
+        // Show status update if status changed
+        if (previousStatus && orderData.status !== previousStatus) {
+          setStatusUpdate({
+            message: `Order status updated to: ${ORDER_STATUSES[orderData.status]?.label || orderData.status}`,
+            timestamp: new Date(),
+          });
+          setTimeout(() => setStatusUpdate(null), 5000);
+        }
       } catch (err) {
         console.error('Failed to load order:', err);
         setError(err.message || 'Failed to load order');
@@ -46,56 +53,11 @@ export const OrderTrackingPage = () => {
 
     if (id) {
       loadOrder();
+      // Poll for order updates every 5 seconds
+      const interval = setInterval(loadOrder, 5000);
+      return () => clearInterval(interval);
     }
-
-    return () => {};
   }, [id]);
-
-  useEffect(() => {
-    if (socket && socketConnected && id) {
-      joinOrderRoom(id);
-      return () => {
-        leaveOrderRoom(id);
-      };
-    }
-  }, [socket, socketConnected, id]);
-
-  useEffect(() => {
-    if (!socket || !id) return;
-
-    const handleOrderUpdated = (data) => {
-      if (data.orderId === id) {
-        setOrder(data.order);
-        setStatusUpdate({
-          message: `Order status updated to: ${ORDER_STATUSES[data.status]?.label || data.status}`,
-          timestamp: new Date(),
-        });
-        
-        // Clear status update after 5 seconds
-        setTimeout(() => setStatusUpdate(null), 5000);
-      }
-    };
-
-    const handleDeliveryTracking = (data) => {
-      if (data.orderId === id) {
-        setOrder(data.order);
-        setStatusUpdate({
-          message: `Your order is ${data.status === 'out_for_delivery' ? 'on the way!' : 'delivered!'}`,
-          timestamp: new Date(),
-        });
-        
-        setTimeout(() => setStatusUpdate(null), 5000);
-      }
-    };
-
-    socket.on('orderUpdated', handleOrderUpdated);
-    socket.on('deliveryTracking', handleDeliveryTracking);
-
-    return () => {
-      socket.off('orderUpdated', handleOrderUpdated);
-      socket.off('deliveryTracking', handleDeliveryTracking);
-    };
-  }, [socket, id]);
 
   if (loading) {
     return (
@@ -125,18 +87,10 @@ export const OrderTrackingPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <PageHeader 
-          title={`Order #${order._id?.toString().slice(-8) || order.id?.slice(-8) || 'N/A'}`}
-          subtitle="Track your order in real-time" 
-        />
-        <div className="flex items-center gap-2">
-          <div className={`h-2 w-2 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-          <span className="text-xs text-slate-600">
-            {socketConnected ? 'Live' : 'Offline'}
-          </span>
-        </div>
-      </div>
+      <PageHeader 
+        title={`Order #${order._id?.toString().slice(-8) || order.id?.slice(-8) || 'N/A'}`}
+        subtitle="Track your order status" 
+      />
 
       {/* Status Update Banner */}
       {statusUpdate && (
