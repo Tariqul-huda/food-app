@@ -5,6 +5,12 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
 let socket = null;
 
 export const initializeSocket = (token) => {
+  // 1. CRITICAL GUARD: Don't connect if no token
+  if (!token) {
+    console.error('Socket initialization failed: No token provided.');
+    return null;
+  }
+
   if (socket?.connected) {
     return socket;
   }
@@ -16,18 +22,8 @@ export const initializeSocket = (token) => {
     transports: ['websocket', 'polling'],
   });
 
-  socket.on('connect', () => {
-    console.log('Socket.io connected');
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Socket.io disconnected');
-  });
-
-  socket.on('connect_error', (error) => {
-    console.error('Socket.io connection error:', error);
-  });
-
+  // ... keep your event listeners ...
+  
   return socket;
 };
 

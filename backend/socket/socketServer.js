@@ -16,21 +16,39 @@ export const initializeSocket = (httpServer) => {
   });
 
   // Socket authentication middleware
-  io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      return next(new Error('Authentication error'));
-    }
+// Socket authentication middleware
+io.use((socket, next) => {
+  // 1. Get token and strip "Bearer " if present
+  let token = socket.handshake.auth.token;
+  
+  console.log('--- Socket Auth Attempt ---');
+  console.log('Received Token:', token ? `${token.substring(0, 10)}...` : 'NULL');
 
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      socket.userId = decoded.id;
-      socket.userRole = decoded.role;
-      next();
-    } catch (err) {
-      next(new Error('Authentication error'));
-    }
-  });
+  if (!token) {
+    console.log('Auth Failed: No token provided');
+    return next(new Error('Authentication error'));
+  }
+
+  // CLEANUP: If token comes as "Bearer eyJ...", remove "Bearer "
+  if (token.startsWith('Bearer ')) {
+    token = token.slice(7, token.length).trimLeft();
+  }
+
+  try {
+    // 2. Verify with the secret
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    socket.userId = decoded.id;
+    socket.userRole = decoded.role;
+    
+    console.log('Auth Success:', socket.userId);
+    next();
+  } catch (err) {
+    console.error('Auth Failed: Verification Error:', err.message);
+    // This is what triggers your client-side error
+    next(new Error('Authentication error'));
+  }
+});
 
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.userId} (${socket.userRole})`);
