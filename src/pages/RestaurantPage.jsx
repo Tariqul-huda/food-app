@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { api } from '../api/client';
+import { useParams, Link } from 'react-router-dom';
+import { userApi } from '../api/userClient';
 import { MenuItemCard } from '../components/MenuItemCard';
 import { useAppState } from '../context/AppContext';
 import { nextRewardProgress } from '../utils/coin';
@@ -17,13 +17,17 @@ export const RestaurantPage = () => {
     const load = async () => {
       if (!id) return;
       setLoading(true);
+      setError(null);
       try {
-        const [restaurantData, menuData] = await Promise.all([api.getRestaurant(id), api.getMenu(id)]);
+        const [restaurantData, menuData] = await Promise.all([
+          userApi.getRestaurant(id),
+          userApi.getMenuItems(id),
+        ]);
         setRestaurant(restaurantData);
         setMenu(menuData);
-        setError(undefined);
       } catch (err) {
-        setError(err.message);
+        console.error('Failed to load restaurant:', err);
+        setError(err.message || 'Failed to load restaurant');
       } finally {
         setLoading(false);
       }
@@ -31,8 +35,9 @@ export const RestaurantPage = () => {
     load();
   }, [id]);
 
-  const coins = restaurant ? user?.coinBalances.find((c) => c.restaurantId === restaurant.id)?.coins ?? 0 : 0;
-  const { progress, remaining } = restaurant ? nextRewardProgress(coins, restaurant.coinThreshold) : { progress: 0, remaining: 0 };
+  const restaurantId = restaurant?.id || restaurant?._id;
+  const coins = restaurantId ? user?.coinBalances?.find((c) => c.restaurantId === restaurantId)?.coins ?? 0 : 0;
+  const { progress, remaining } = restaurant ? nextRewardProgress(coins, restaurant.coinThreshold || 100) : { progress: 0, remaining: 0 };
 
   const groupedMenu = useMemo(() => {
     const groups = {};
@@ -43,9 +48,39 @@ export const RestaurantPage = () => {
     return groups;
   }, [menu]);
 
-  if (loading) return <p className="text-slate-600">Loading restaurant...</p>;
-  if (error) return <p className="text-rose-600">Error: {error}</p>;
-  if (!restaurant) return <p className="text-slate-600">Restaurant not found.</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-slate-600">Loading restaurant...</p>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <p className="text-rose-600">{error}</p>
+        <Link
+          to="/"
+          className="inline-block rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
+        >
+          Back to Home
+        </Link>
+      </div>
+    );
+  }
+  if (!restaurant) {
+    return (
+      <div className="space-y-4">
+        <p className="text-slate-600">Restaurant not found.</p>
+        <Link
+          to="/"
+          className="inline-block rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
+        >
+          Back to Home
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -56,11 +91,17 @@ export const RestaurantPage = () => {
             <h1 className="text-3xl font-bold text-slate-900">{restaurant.name}</h1>
             <p className="text-slate-600">{restaurant.description}</p>
             <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
-              <span className="rounded-full bg-slate-100 px-3 py-1">⭐ {restaurant.rating.toFixed(1)}</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">{restaurant.cuisine}</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">ETA {restaurant.eta}</span>
+              {restaurant.rating && (
+                <span className="rounded-full bg-slate-100 px-3 py-1">⭐ {restaurant.rating.toFixed(1)}</span>
+              )}
+              {restaurant.cuisine && (
+                <span className="rounded-full bg-slate-100 px-3 py-1">{restaurant.cuisine}</span>
+              )}
+              {restaurant.eta && (
+                <span className="rounded-full bg-slate-100 px-3 py-1">ETA {restaurant.eta}</span>
+              )}
               <span className="rounded-full bg-brand-50 px-3 py-1 text-brand-700">
-                Coins {restaurant.coinRate}/$ · Redeem at {restaurant.coinThreshold}
+                Coins {restaurant.coinRate || 5}/$ · Redeem at {restaurant.coinThreshold || 100}
               </span>
             </div>
           </div>
@@ -85,7 +126,7 @@ export const RestaurantPage = () => {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {items.map((item) => (
-              <MenuItemCard key={item.id} item={item} restaurant={restaurant} />
+              <MenuItemCard key={item._id || item.id} item={item} restaurant={restaurant} />
             ))}
           </div>
         </section>
